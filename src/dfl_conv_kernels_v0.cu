@@ -173,21 +173,68 @@ int main(){
         1
     );
 
-    kernel_martix<<<
-        grid,
-        block
-    >>>(
-        device_a,
-        device_w,
-        device_bias,
-        M,
-        N,
-        K,
-        device_c
-    );
+    constexpr int WARMUP = 100;
+    constexpr int ITERS = 1000;
+
+    //预热
+    for (int i = 0; i < WARMUP; ++i) {
+        kernel_martix<<<grid, block>>>(
+            device_a,
+            device_w,
+            device_bias,
+            M,
+            N,
+            K,
+            device_c
+        );
+    }
 
     CUDACHECK(cudaGetLastError());
     CUDACHECK(cudaDeviceSynchronize());
+
+    //计时
+    cudaEvent_t start,stop;
+
+    CUDACHECK(cudaEventCreate(&start));
+    CUDACHECK(cudaEventCreate(&stop));
+
+    CUDACHECK(cudaEventRecord(start));
+    for(int i = 0; i<ITERS; i++){
+        kernel_martix<<<
+            grid,
+            block
+        >>>(
+            device_a,
+            device_w,
+            device_bias,
+            M,
+            N,
+            K,
+            device_c
+        );
+    }
+
+    CUDACHECK(cudaGetLastError());
+
+    CUDACHECK(cudaEventRecord(stop));
+    CUDACHECK(cudaEventSynchronize(stop));
+
+    float total_ms = 0.0f;
+
+    CUDACHECK(
+        cudaEventElapsedTime(
+            &total_ms,
+            start,
+            stop
+        )
+    );
+    
+    float avg_us = total_ms * 1000.0f / ITERS;
+
+    cout<<"v0 average latency is "<<avg_us<<"us"<<endl;
+
+    CUDACHECK(cudaEventDestroy(start));
+    CUDACHECK(cudaEventDestroy(stop));
 
     vector<float> host_c(c_cap);
 
