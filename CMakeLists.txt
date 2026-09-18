@@ -23,6 +23,10 @@ add_executable(dfl_conv_benchmark_v1
   src/dfl_conv_kernels_v1.cu
 )
 
+add_executable(dfl_conv_benchmark_v2
+  src/dfl_conv_kernels_v2.cu
+)
+
 target_include_directories(dfl_conv_benchmark_v0 PRIVATE include)
 target_link_libraries(dfl_conv_benchmark_v0 PRIVATE CUDA::cudart)
 
@@ -40,6 +44,17 @@ target_link_libraries(dfl_conv_benchmark_v1 PRIVATE CUDA::cudart)
 # Keep source locations in Nsight Compute and make resource/spill information
 # visible while learning. Remove the ptxas diagnostics only after recording it.
 target_compile_options(dfl_conv_benchmark_v1 PRIVATE
+  $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>
+  $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas=-v>
+  $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas=-warn-spills>
+)
+
+target_include_directories(dfl_conv_benchmark_v2 PRIVATE include)
+target_link_libraries(dfl_conv_benchmark_v2 PRIVATE CUDA::cudart)
+
+# Keep source locations in Nsight Compute and make resource/spill information
+# visible while learning. Remove the ptxas diagnostics only after recording it.
+target_compile_options(dfl_conv_benchmark_v2 PRIVATE
   $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>
   $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas=-v>
   $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas=-warn-spills>
