@@ -74,3 +74,19 @@ target_compile_options(dfl_conv_benchmark_v3 PRIVATE
   $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas=-v>
   $<$<COMPILE_LANGUAGE:CUDA>:-Xptxas=-warn-spills>
 )
+
+add_executable(dfl_conv_cublas_benchmark
+    src/dfl_conv_cublas_benchmark.cu
+)
+
+target_include_directories(dfl_conv_cublas_benchmark PRIVATE include)
+target_link_libraries(
+    dfl_conv_cublas_benchmark
+    PRIVATE
+    CUDA::cudart
+    CUDA::cublas
+)
+
+target_compile_options(dfl_conv_cublas_benchmark PRIVATE
+    $<$<COMPILE_LANGUAGE:CUDA>:-lineinfo>
+)
