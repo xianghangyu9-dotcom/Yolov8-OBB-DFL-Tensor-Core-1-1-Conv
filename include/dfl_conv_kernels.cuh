@@ -5,8 +5,9 @@
 
 using namespace std;
 
-bool input_load(const string &path, vector<float> &data){
-    std::ifstream file(path , std::ios::binary | std::ios::ate);
+template <typename T>
+bool input_load(const string &path, vector<T> &data){
+    ifstream file(path , ios::binary | ios::ate);
 
     if(!file.is_open())
     {
@@ -14,11 +15,11 @@ bool input_load(const string &path, vector<float> &data){
         return false;
     }
 
-    file.seekg(0, std::ios::beg);
+    file.seekg(0, ios::beg);
 
     file.read(
         reinterpret_cast<char*>(data.data()),
-        static_cast<std::streamsize>(data.size() * sizeof(float))
+        static_cast<streamsize>(data.size() * sizeof(T))
     );
 
     if(!file){
@@ -28,9 +29,9 @@ bool input_load(const string &path, vector<float> &data){
 
     return true;
 }
-
-bool output_write(const std::string &path, vector<float> &data){
-    std::ofstream file(path , std::ios::binary | std::ios::trunc);
+template <typename T>
+bool output_write(const string &path, vector<T> &data){
+    ofstream file(path , ios::binary | ios::trunc);
 
     if(!file.is_open())
     {
@@ -40,7 +41,7 @@ bool output_write(const std::string &path, vector<float> &data){
 
     file.write(
         reinterpret_cast<char*>(data.data()),
-        static_cast<std::streamsize>(data.size() * sizeof(float))
+        static_cast<streamsize>(data.size() * sizeof(T))
     );
 
     return static_cast<bool>(file);
