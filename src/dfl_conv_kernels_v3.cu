@@ -48,6 +48,8 @@ void kernel_martix(
     constexpr int warp_size_m = 2;
     constexpr int warp_size_n = 4;
 
+    constexpr int PAD = 8;
+
     constexpr int frag_size_m = BM / (warp_size_m * WMMA_M);
     constexpr int frag_size_k = BK / WMMA_K;
     constexpr int frag_size_n = BN / (warp_size_n * WMMA_N);
@@ -61,8 +63,8 @@ void kernel_martix(
     int offset_x = BN * blockIdx.x;
 
     __shared__ __align__ (32) __half s_mem_w[BM][BK];
-    __shared__ __align__ (32) __half s_mem_a[BK][BN];
-    __shared__ __align__(32) float   s_mem_c[BM][BN];
+    __shared__ __align__ (32) __half s_mem_a[BK][BN + PAD];
+    __shared__ __align__ (32) float  s_mem_c[BM][BN];
 
     fragment<
         matrix_a,
@@ -110,7 +112,7 @@ void kernel_martix(
             {
                 int local_m = tid / k_size_w + i;
                 int local_k = tid % k_size_w * 8; 
-                const float4 w8 = *reinterpret_cast<const float4*>(matrix_w1 + (offset_y + local_m) * k + k0 + local_k);
+                const float4 w8 = *reinterpret_cast<const float4*>(matrix_w1 + (offset_y + local_m) * k + local_k + k0);
                 *reinterpret_cast<float4*>(&s_mem_w[local_m][local_k]) = w8;
             }
 
@@ -149,7 +151,7 @@ void kernel_martix(
                 load_matrix_sync(
                     a_frag[i][j],
                     &s_mem_a[i * WMMA_K][(warp_x * frag_size_n + j) * WMMA_N],
-                    BN
+                    BN + PAD
                 );
             }
         }

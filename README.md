@@ -16,7 +16,7 @@
 | V0 | FP32 | Global Memory 读取 + 寄存器 `4×4` 输出微块 |
 | V1 | FP32 | Shared Memory tiling，复用 W/A tile |
 | V2 | FP32 | Shared Memory 双缓冲 + `float4` 向量化 Global-to-Shared 读取 |
-| V3 | FP16 输入/权重，FP32 累加 | WMMA Tensor Core；`64×128×32` CTA tile；`2×4` warp grid；每 warp 计算 `2×2` 个 WMMA fragment；`float4` 搬运、Shared Memory bias epilogue |
+| V3 | FP16 输入/权重，FP32 累加 | WMMA Tensor Core；`64×128×32` CTA tile；`2×4` warp grid；每 warp 计算 `2×2` 个 WMMA fragment；`float4` 搬运、Shared Memory bias epilogue；减少 bank conflict |
 
 # 手写 kernel 延迟结果
 
@@ -27,7 +27,7 @@
 | V2 | 11.3472 us | 11.1521 us | 10.9927 us | **11.1640 us** | **5.90×** |
 | V3 | 10.8079 us | 10.6403 us | 10.4060 us | **10.6181 us** | **6.21×** |
 
-> 注：V0~V2 使用 FP32 输入和 FP32 Golden；V3 使用 FP16 A/W 输入、FP32 accumulate 与对应 FP16 Golden。因此 V3 相对 V0 的延迟比仅表示端到端算子延迟变化，不应解释为完全相同数值精度下的纯优化收益。
+> 注：V0~V2 使用 FP32 输入和 FP32 Golden；V3 使用 FP16 A/W 输入、FP32 accumulate 与对应 FP16 Golden。因此 V3 相对 V0 的延迟比仅表示端到端算子延迟变化，不为完全相同数值精度下的纯优化收益。
 
 # cuBLAS 参考比较
 
