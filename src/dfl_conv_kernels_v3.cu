@@ -62,9 +62,9 @@ void kernel_martix(
     int offset_y = BM * blockIdx.y;
     int offset_x = BN * blockIdx.x;
 
-    __shared__ __align__ (32) __half s_mem_w[BM][BK];
+    __shared__ __align__ (32) __half s_mem_w[BM][BK + PAD];
     __shared__ __align__ (32) __half s_mem_a[BK][BN + PAD];
-    __shared__ __align__ (32) float  s_mem_c[BM][BN];
+    __shared__ __align__ (32) float  s_mem_c[BM][BN + PAD];
 
     fragment<
         matrix_a,
@@ -138,7 +138,7 @@ void kernel_martix(
                 load_matrix_sync(
                     w_frag[i][j],
                     &s_mem_w[(warp_y * frag_size_m + i) * WMMA_M][j * WMMA_K],
-                    BK
+                    BK + PAD
                 );
             }
         }
@@ -186,7 +186,7 @@ void kernel_martix(
         #pragma unroll
         for(int j = 0;j < frag_size_n; j++)
         {
-            store_matrix_sync(&s_mem_c[share_m + i * WMMA_M][share_n + j * WMMA_N], c_frag[i][j],BN,mem_row_major);
+            store_matrix_sync(&s_mem_c[share_m + i * WMMA_M][share_n + j * WMMA_N], c_frag[i][j],BN + PAD,mem_row_major);
         }
     }
 
@@ -383,6 +383,24 @@ int main(){
     if(!output_write(OUTPUT "/output_dfl_p3.bin",host_c)){
         return 1;
     }
+
+    int numBlocksPerSm = 0;
+
+    cudaOccupancyMaxActiveBlocksPerMultiprocessor(
+    &numBlocksPerSm, 
+    kernel_martix,      // 你的 kernel 函数
+    256, 
+    0              // 动态共享内存大小
+    );
+    int deviceId;
+    cudaGetDevice(&deviceId);
+    int smCount;
+    cudaDeviceGetAttribute(&smCount, cudaDevAttrMultiProcessorCount, deviceId);
+
+    // 计算一次 wave 的 block 数
+    int blocksPerWave = numBlocksPerSm * smCount;
+
+    cout<<"numBlocksPerSm is "<<numBlocksPerSm<<" smCount is "<<smCount<<" blocksPerWave is "<<blocksPerWave<<endl;
 
     cout<<"v3 is successful!"<<endl;
 
